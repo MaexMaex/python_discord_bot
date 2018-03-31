@@ -8,6 +8,19 @@ class DBView:
         self.conn = sqlite3.connect(dbname)
         self.c = self.conn.cursor()
 
+
+    def is_not_drinking(self, discord_id):
+        with self.conn:
+            self.c.execute("SELECT status FROM users WHERE discord_id = :discord_id", {'discord_id': discord_id})
+            if self.c.fetchone() is 0:
+                return True
+
+
+    def get_discord_id(self, discord_id):
+        with self.conn:
+            self.c.execute("SELECT discord_id FROM users WHERE discord_id = :discord_id", {'discord_id': discord_id})
+            return self.c.fetchone()
+
     # add a user to the database
     def add_user(self, user):
         with self.conn:
@@ -15,9 +28,9 @@ class DBView:
 
 
     # fetch user.id
-    def get_user(self, user):
+    def get_user(self, discord_id):
         with self.conn:
-            self.c.execute("SELECT * FROM users WHERE discord_id = :discord_id", {'discord_id': user.discord_id})
+            self.c.execute("SELECT * FROM users WHERE discord_id = :discord_id", {'discord_id': discord_id})
             return self.c.fetchone()
 
 
@@ -77,4 +90,4 @@ class DBView:
     def add_bttn(self, user, bttn):
         with self.conn:
             self.c.execute("INSERT INTO bttns VALUES (:discord_id, :party_name, :timestamp)", {'discord_id': user.discord_id, 'party_name': bttn.party_name, 'timestamp': bttn.timestamp})
-            
+               

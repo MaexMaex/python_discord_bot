@@ -6,6 +6,9 @@ class User:
         self.score = score
         self.status = status
 
+    def __repr__(self):
+        return self.name
+
 class Bttn():
 
     def __init__(self, discord_id, party_name, timestamp):
