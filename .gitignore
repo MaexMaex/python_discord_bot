@@ -99,3 +99,15 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+#.vscode folder
+.vscode/
+
+# app-token
+token.txt
+
+# .sqlite database
+*.sqlite
+
+# tests
+tests.py
