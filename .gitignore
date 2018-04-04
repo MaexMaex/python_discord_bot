@@ -106,6 +106,9 @@ ENV/
 # app-token
 token.txt
 
+# channel id:
+snus_id.txt
+
 # .sqlite database
 *.sqlite
 

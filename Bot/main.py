@@ -9,6 +9,10 @@ from sqlite_view import DBView
 with open('../token.txt') as f:
     token = f.read().strip()
 
+# Load channel ids
+with open('../snus_id.txt') as f:
+    snus_id = f.read().strip()
+
 client = discord.Client()
 db = DBView()
 
@@ -19,22 +23,25 @@ async def on_ready():
     print('ID: ' + client.user.id)
     print('------')
 
+
+# Returns a user_object from the database
 def get_user_obj(id):
     usr_list = db.get_user(id)
     usr_obj = User(usr_list[0], usr_list[1], usr_list[2], usr_list[3])
     return usr_obj
 
+
+# Adds new users to the database as they join the server.
 @client.event
 async def on_member_join(member):
     server = member.server
-    #fmt = 'Welcome {0.name} to {1.name}! You can now start using D2-bot'
     usr = User(member.id, member.name, 0, 0) 
     db.add_user(usr)
-    #await client.send_message(server, fmt.format(member, server))
+
 
 @client.event
 async def on_message(message):
-
+    # Ignore messages sent by the bot
     if message.author == client.user:
         return
 
@@ -60,7 +67,7 @@ async def on_message(message):
                 fmt = '{0.author.mention}'.format(message) + ' stopped drinking!'
                 await client.send_message(message.channel, fmt.format())
         else:
-            fmt = "FUCK, somethings fucky and has fucked up... try /start"
+            fmt = "You don't seem to be in the database, try /start !"
 
     if message.content.startswith('/stats'):
         stats = db.get_all_score()
@@ -102,18 +109,28 @@ async def on_message(message):
                 # Delete last enty in bttns and rollback score and stats
                 db.edit_status(usr_obj, 0)
                 db.remove_score(usr_obj)
-                # Create a bttn object              
+                # Create a bttn object
+                # 
+                # Fix this in the next update             
                 btn = Bttn(usr_obj.discord_id, 'PLEASE REMOVE THE ROW ABOVE, THIS WAS IS A UNDO', message.timestamp)
                 db.add_bttn(usr_obj, btn)
                 await client.send_message(message.channel, fmt.format())
             else:
                 db.edit_status(usr_obj, 1)
                 await client.send_message(message.channel, fmt.format())
+
     if message.content.startswith('/help'):
-        fmt = "*hick*\n\nHi, I live here now.\nThe old commands are still available, bttn, stats, status, undo and help!\n*hick*"
+        fmt = "*hick*\n\nHi, I'm D2-Bot and I live here now.\nThe old commands are still available :\nbttn, stats, status, undo and help!\n*hick*"
         await client.send_message(message.channel, fmt.format())
-       
-    #if message.startswith('/hello'):
+
+    
+    if message:
+        print(message.channel)
+        print(client.get_channel(snus_id))
+        print("snus mentioned!")
+        snus = discord.Emoji()
+        await client.add_reaction(message, snus)
+
         
 @client.event
 async def on_message_delete(message):
