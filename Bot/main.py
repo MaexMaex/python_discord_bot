@@ -1,17 +1,26 @@
 # -*- coding: utf-8 -*-
 import discord
 import asyncio
+import logging
+import random
 
 from sqlite_models import User, Bttn
 from sqlite_view import DBView
+
+# Logging
+logger = logging.getLogger('discord')
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 # Load the secret token
 with open('../token.txt') as f:
     token = f.read().strip()
 
 # Load channel ids
-with open('../snus_id.txt') as f:
-    snus_id = f.read().strip()
+with open('../chan_id.txt') as f:
+    chan_id = f.read().strip()
 
 client = discord.Client()
 db = DBView()
@@ -89,10 +98,13 @@ async def on_message(message):
 
     if message.content.startswith('/status'):
         status = db.get_all_status()
-        fmt = "The following minotaurs are drinking:\n"
-        for user in status:
-            if user[1] is 1:
-                fmt += user[0] + "\n"
+        if status is not None:
+            fmt = "The following minotaurs are drinking:\n"
+            for user in status:
+                if user[1] is 1:
+                    fmt += user[0] + "\n"
+        else:
+            fmt = "Is this what tipaton looks like?"
         await client.send_message(message.channel, fmt.format())
 
     if message.content.startswith('/undo'):
@@ -124,12 +136,11 @@ async def on_message(message):
         await client.send_message(message.channel, fmt.format())
 
     
-    if message:
-        print(message.channel)
-        print(client.get_channel(snus_id))
-        print("snus mentioned!")
-        snus = discord.Emoji()
-        await client.add_reaction(message, snus)
+    if checkWord(message.content):
+        # Make the toasts a little more random
+        if random.random() > 0.5:
+            await client.add_reaction(message, '🍻')
+        
 
         
 @client.event
@@ -138,6 +149,18 @@ async def on_message_delete(message):
         fmt = '*[SERVER RESPOND]* : {0.author.name} tried nuking the service, unacceptable, the show *MUST* go on! \n*[SERVER RESPOND]* :{0.author.name} wrote: \n{0.content}'
         await client.send_message(message.channel, fmt.format(message))
     else:
-        pass
+        gifList = ['http://gph.is/1tqdwbx', 'http://gph.is/1a6zuNG', 'http://gph.is/2FUSxMU', 'http://gph.is/2Cd1e3e', 'http://gph.is/1OZm0mH']
+        fmt = random.choice(gifList)
+        await client.send_message(message.channel, fmt.format(message))
+
+def checkWord(content):
+    biraList = ['öl', 'bisse', 'bärs', 'kalja', 'bira', 'beer', 'pilsner']
+    for word in biraList:
+        if content.find(word) is not -1:
+            return True
+        elif content.find(word.upper()) is not -1:
+            return True
+        elif content.find(word.title()) is not -1:
+            return True
 
 client.run(token)
