@@ -107,10 +107,13 @@ ENV/
 token.txt
 
 # channel id:
-snus_id.txt
+chan_id.txt
 
 # .sqlite database
 *.sqlite
 
 # tests
 tests.py
+
+# logger log
+*.log
