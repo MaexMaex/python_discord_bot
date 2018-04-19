@@ -106,8 +106,14 @@ ENV/
 # app-token
 token.txt
 
+# channel id:
+chan_id.txt
+
 # .sqlite database
 *.sqlite
 
 # tests
 tests.py
+
+# logger log
+*.log
