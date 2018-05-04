@@ -43,8 +43,13 @@ def get_user_obj(id):
 
 @client.event
 async def on_member_update(before, after):
-    usr = User(before.id, after.nick)
-    db.update_nickname(usr)
+    # check for users who has no nick
+    if after.nick is None:
+        usr = User(before.id, after.name)
+        db.update_nickname(usr)
+    else:
+        usr = User(before.id, after.nick)
+        db.update_nickname(usr)
 
 # Adds new users to the database as they join the server.
 @client.event
@@ -88,7 +93,10 @@ async def on_message(message):
         stats = db.get_all_score()
         fmt = "Here are the stats:\n"
         for user in stats:
-            fmt += user[0] + " : " + str(user[1]) + "\n"
+            if user[0] is None:
+                fmt += "This is an error message! There are people without nicknames, I hate that! \nThis has probably messed.\nTell people to set their nicknames or I will do so! \nhttps://support.discordapp.com/hc/en-us/articles/219070107-Server-Nicknames"
+            else:
+                fmt += user[0] + " : " + str(user[1]) + "\n"
         await client.send_message(message.channel, fmt.format())
 
     if message.content.startswith('/start'):
@@ -107,8 +115,12 @@ async def on_message(message):
         if status is not None:
             fmt = "The following minotaurs are drinking:\n"
             for user in status:
-                if user[1] is 1:
-                    fmt += user[0] + "\n"
+                if user[1] is None:
+                    fmt += "This is an error message! There are people without nicknames, I hate that! \nThis has probably messed.\nTell people to set their nicknames or I will do so! \nhttps://support.discordapp.com/hc/en-us/articles/219070107-Server-Nicknames"
+                    return
+                else:
+                    if user[1] is 1:
+                        fmt += user[0] + "\n"
         else:
             fmt = "Is this what tipaton looks like?"
         await client.send_message(message.channel, fmt.format())
@@ -139,7 +151,9 @@ async def on_message(message):
 
     if message.content.startswith('/help'):
         fmt = "*hick*\n\nHi, I'm D2-Bot and I live here now.\nThe old commands are still available :\nbttn, stats, status, undo and help!\n*hick*"
+        
         await client.send_message(message.channel, fmt.format())
+
 
     
     if checkWord(message.content):
