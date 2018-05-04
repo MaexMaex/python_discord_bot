@@ -95,6 +95,7 @@ async def on_message(message):
         for user in stats:
             if user[0] is None:
                 fmt += "This is an error message! There are people without nicknames, I hate that! \nThis has probably messed.\nTell people to set their nicknames or I will do so! \nhttps://support.discordapp.com/hc/en-us/articles/219070107-Server-Nicknames"
+                await client.send_message(message.channel, fmt.format())
                 return
             else:
                 fmt += user[0] + " : " + str(user[1]) + "\n"
@@ -118,6 +119,7 @@ async def on_message(message):
             for user in status:
                 if user[0] is None:
                     fmt += "This is an error message! There are people without nicknames, I hate that! \nThis has probably messed.\nTell people to set their nicknames or I will do so! \nhttps://support.discordapp.com/hc/en-us/articles/219070107-Server-Nicknames"
+                    await client.send_message(message.channel, fmt.format())
                     return
                 else:
                     if user[1] is 1:
