@@ -27,6 +27,11 @@ class DBView:
             self.c.execute("INSERT INTO users VALUES (:discord_id, :name, :score, :status)", {'discord_id': user.discord_id, 'name': user.name, 'score': user.score, 'status': user.status})
 
 
+    # updatea nick in the database
+    def update_nickname(self, user):
+        with self.conn:
+            self.c.execute("UPDATE users SET name = :name WHERE discord_id = :discord_id", {'discord_id': user.discord_id, 'name': user.name})
+
     # fetch user.id
     def get_user(self, discord_id):
         with self.conn:

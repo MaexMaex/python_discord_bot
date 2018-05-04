@@ -9,7 +9,7 @@ from sqlite_view import DBView
 
 # Logging
 logger = logging.getLogger('discord')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.ERROR)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
@@ -25,13 +25,15 @@ with open('../chan_id.txt') as f:
 client = discord.Client()
 db = DBView()
 
+games = ['Beer Simulator 2018', 'Pong', 'Bar Fighter VR', 'Get to the Choppah', 'Meme-Lord-9000']
+
 @client.event
 async def on_ready():
     print('Logged in as')
     print('Username: ' + client.user.name)
     print('ID: ' + client.user.id)
     print('------')
-
+    await client.change_presence(game=discord.Game(name=random.choice(games)))
 
 # Returns a user_object from the database
 def get_user_obj(id):
@@ -39,12 +41,17 @@ def get_user_obj(id):
     usr_obj = User(usr_list[0], usr_list[1], usr_list[2], usr_list[3])
     return usr_obj
 
+@client.event
+async def on_member_update(before, after):
+    print('User ' + before.nick + ' updated his nick to ' + after.nick)
+    usr = User(before.id, after.nick)
+    db.update_nickname(usr)
 
 # Adds new users to the database as they join the server.
 @client.event
 async def on_member_join(member):
     server = member.server
-    usr = User(member.id, member.name, 0, 0) 
+    usr = User(member.id, member.name) 
     db.add_user(usr)
 
 
@@ -138,8 +145,9 @@ async def on_message(message):
     
     if checkWord(message.content):
         # Make the toasts a little more random
+        array = ['🍻', '🍺']
         if random.random() > 0.5:
-            await client.add_reaction(message, '🍻')
+            await client.add_reaction(message, random.choice(array))
         
 
         

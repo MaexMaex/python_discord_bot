@@ -1,6 +1,6 @@
 class User:
         
-    def __init__(self, discord_id, name, score, status):
+    def __init__(self, discord_id, name, score=0, status=0):
         self.discord_id = discord_id
         self.name = name
         self.score = score
