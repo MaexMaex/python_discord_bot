@@ -43,7 +43,6 @@ def get_user_obj(id):
 
 @client.event
 async def on_member_update(before, after):
-    print('User ' + before.nick + ' updated his nick to ' + after.nick)
     usr = User(before.id, after.nick)
     db.update_nickname(usr)
 
