@@ -105,6 +105,7 @@ ENV/
 
 # app-token
 token.txt
+token_dev.txt
 
 # channel id:
 chan_id.txt
@@ -117,3 +118,7 @@ tests.py
 
 # logger log
 *.log
+
+
+# Ds store
+.DS_Store
