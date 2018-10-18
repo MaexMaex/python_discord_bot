@@ -3,6 +3,8 @@ import discord
 import asyncio
 import logging
 import random
+import matplotlib.pyplot as plt
+import numpy as np
 
 from sqlite_models import User, Bttn
 from sqlite_view import DBView
@@ -90,14 +92,28 @@ async def on_message(message):
             fmt = "You don't seem to be in the database, try /start !"
 
     if message.content.startswith('/stats'):
+        label = []
+        no_bttns = []
+
         stats = db.get_all_score()
-        fmt = "Here are the stats:\n"
+        # builds the labels and number of bttns lists
         for user in stats:
             if user[0] is None:
                 fmt += "This is an error message! There are people without nicknames, I hate that! \nThis has probably messed.\nTell people to set their nicknames or I will do so! \nhttps://support.discordapp.com/hc/en-us/articles/219070107-Server-Nicknames"
             else:
-                fmt += user[0] + " : " + str(user[1]) + "\n"
-        await client.send_message(message.channel, fmt.format())
+                label.append(user[0])
+                no_bttns.append(user[1])
+        
+        index = np.arange(len(label))
+        plt.bar(index, no_bttns)
+        plt.xticks(index, label, fontsize=10, rotation=30)
+        plt.title('Number of Bttns as of 1 Jan 2018')
+
+        fig = plt.gcf()
+        fig.set_size_inches(18.5, 10.5)
+        fig.savefig('figure.png')
+        plt.close(fig) 
+        await client.send_file(message.channel, 'figure.png')
 
     if message.content.startswith('/start'):
         author = message.author
