@@ -122,3 +122,6 @@ tests.py
 
 # Ds store
 .DS_Store
+
+# MatPlotLib
+figure.png
