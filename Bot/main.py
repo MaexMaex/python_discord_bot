@@ -119,10 +119,14 @@ async def on_message(message):
         plt.xticks(index, label, fontsize=10, rotation=30)
         plt.title('Number of Bttns as of 1 Jan 2018')
 
+        for a,b in zip(index, no_bttns):
+            plt.text(a, b, str(b), color='red', fontweight='bold', ha='center', va='bottom', fontsize=20)
+
         fig = plt.gcf()
         fig.set_size_inches(18.5, 10.5)
         fig.savefig('figure.png')
         plt.close(fig) 
+
         await client.send_file(message.channel, 'figure.png')
 
     if message.content.startswith('/start'):
