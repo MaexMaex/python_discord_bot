@@ -37,7 +37,7 @@ with open('../chan_id.txt') as f:
 client = discord.Client()
 db = DBView()
 
-games = ['Beer Simulator 2018', 'Pong', 'Bar Fighter VR', 'Get to the Choppah', 'Meme-Lord-9000']
+games = ['Beer Simulator 2018', 'Not feeling so well', 'Time for a cold one!', 'Bag in Box?', 'Relaxing!']
 
 @client.event
 async def on_ready():
@@ -214,7 +214,7 @@ async def on_message_delete(message):
         await client.send_message(message.channel, fmt.format(message))
 
 def checkWord(content):
-    biraList = ['öl', 'bisse', 'bärs', 'kalja', 'bira', 'beer', 'pilsner']
+    biraList = ['öl ', 'bisse ', 'bärs ', 'kalja ', 'bira ', 'beer ', 'pilsner ']
     for word in biraList:
         if content.find(word) is not -1:
             return True
