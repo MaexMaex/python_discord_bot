@@ -137,8 +137,8 @@ async def on_message(message):
             fmt = "http://gph.is/24IKcSC"
             await client.send_message(message.channel, fmt.format())
         else:
-            msg = await client.send_message(message.channel, 'I did the math, your have already signed up to the d2-service.\nI will try deleting the database, maybe that helps!')
-            await client.delete_message(msg)
+            fmt = "https://gph.is/1ANwFZc"
+            await client.send_message(message.channel, fmt.format())
 
     if message.content.startswith('/status'):
         status = db.get_all_status()
@@ -201,18 +201,6 @@ async def on_message(message):
         if random.random() > 0.5:
             await client.add_reaction(message, random.choice(array))
         
-
-        
-@client.event
-async def on_message_delete(message):
-    if message.author == client.user:
-        fmt = '*[SERVER RESPOND]* : {0.author.name} tried nuking the service, unacceptable, the show *MUST* go on! \n*[SERVER RESPOND]* :{0.author.name} wrote: \n{0.content}'
-        await client.send_message(message.channel, fmt.format(message))
-    else:
-        gifList = ['http://gph.is/1tqdwbx', 'http://gph.is/1a6zuNG', 'http://gph.is/2FUSxMU', 'http://gph.is/2Cd1e3e', 'http://gph.is/1OZm0mH']
-        fmt = random.choice(gifList)
-        await client.send_message(message.channel, fmt.format(message))
-
 
 def checkWord(content):
     biraList = ['öl ', 'bisse ', 'bärs ', 'kalja ', 'bira ', 'beer ', 'pilsner ']
