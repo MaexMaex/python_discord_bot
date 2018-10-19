@@ -5,6 +5,7 @@ import logging
 import random
 import matplotlib.pyplot as plt
 import numpy as np
+from sys import platform
 
 from sqlite_models import User, Bttn
 from sqlite_view import DBView
@@ -16,9 +17,18 @@ handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w'
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
-# Load the secret token
-with open('../token.txt') as f:
-    token = f.read().strip()
+
+# Load the secret token based on os
+if platform == "linux" or platform == "linux2":
+    print('Loading production token')
+    with open('../token.txt') as f:
+        token = f.read().strip()
+elif platform == "darwin":
+    # OS X
+    print('Loading development token')
+    with open('../token_dev.txt') as f:
+        token = f.read().strip()
+
 
 # Load channel ids
 with open('../chan_id.txt') as f:
@@ -27,7 +37,7 @@ with open('../chan_id.txt') as f:
 client = discord.Client()
 db = DBView()
 
-games = ['Beer Simulator 2018', 'Pong', 'Bar Fighter VR', 'Get to the Choppah', 'Meme-Lord-9000']
+games = ['Beer Simulator 2018', 'Not feeling so well', 'Time for a cold one!', 'Bag in Box?', 'Relaxing!']
 
 @client.event
 async def on_ready():
@@ -109,10 +119,14 @@ async def on_message(message):
         plt.xticks(index, label, fontsize=10, rotation=30)
         plt.title('Number of Bttns as of 1 Jan 2018')
 
+        for a,b in zip(index, no_bttns):
+            plt.text(a, b, str(b), color='red', fontweight='bold', ha='center', va='bottom', fontsize=20)
+
         fig = plt.gcf()
         fig.set_size_inches(18.5, 10.5)
         fig.savefig('figure.png')
         plt.close(fig) 
+
         await client.send_file(message.channel, 'figure.png')
 
     if message.content.startswith('/start'):
@@ -128,7 +142,16 @@ async def on_message(message):
 
     if message.content.startswith('/status'):
         status = db.get_all_status()
-        if status is not None:
+        
+        # stupid loop to check if there are 1 in the stats
+        for user in status:
+            if user[1] is 0:
+                Bttns = False
+            else:
+                Bttns = True
+                break
+
+        if Bttns:
             fmt = "The following minotaurs are drinking:\n"
             for user in status:
                 if user[1] is None:
@@ -166,7 +189,7 @@ async def on_message(message):
                 await client.send_message(message.channel, fmt.format())
 
     if message.content.startswith('/help'):
-        fmt = "*hick*\n\nHi, I'm D2-Bot and I live here now.\nThe old commands are still available :\nbttn, stats, status, undo and help!\n*hick*"
+        fmt = "Hi, I'm **D2-Bot**.\n\n__Here are my commands.__\n*Have a cold one and give it a try!!!*\n ```/bttn      - Time to let get that 💡 on!\n/stats     - Plots a beautiful graph of the current stats!\n/status    - Someone is surely having a better day than you!\n/undo      - Undo you last bttn with this!\n/help      - Show this text right here ^^^```\n"
         
         await client.send_message(message.channel, fmt.format())
 
@@ -190,8 +213,9 @@ async def on_message_delete(message):
         fmt = random.choice(gifList)
         await client.send_message(message.channel, fmt.format(message))
 
+
 def checkWord(content):
-    biraList = ['öl', 'bisse', 'bärs', 'kalja', 'bira', 'beer', 'pilsner']
+    biraList = ['öl ', 'bisse ', 'bärs ', 'kalja ', 'bira ', 'beer ', 'pilsner ']
     for word in biraList:
         if content.find(word) is not -1:
             return True
