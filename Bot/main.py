@@ -5,6 +5,7 @@ import logging
 import random
 import matplotlib.pyplot as plt
 import numpy as np
+from sys import platform
 
 from sqlite_models import User, Bttn
 from sqlite_view import DBView
@@ -16,9 +17,18 @@ handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w'
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
-# Load the secret token
-with open('../token.txt') as f:
-    token = f.read().strip()
+# Load the secret token based on os
+if platform == "linux" or platform == "linux2":
+    print('Loading production token')
+    with open('../token.txt') as f:
+        token = f.read().strip()
+elif platform == "darwin":
+    # OS X
+    print('Loading development token')
+    with open('../token_dev.txt') as f:
+        token = f.read().strip()
+    
+
 
 # Load channel ids
 with open('../chan_id.txt') as f:
@@ -128,7 +138,16 @@ async def on_message(message):
 
     if message.content.startswith('/status'):
         status = db.get_all_status()
-        if status is not None:
+        
+        # stupid loop to check if there are 1 in the stats
+        for user in status:
+            if user[1] is 0:
+                Bttns = False
+            else:
+                Bttns = True
+                break
+
+        if Bttns:
             fmt = "The following minotaurs are drinking:\n"
             for user in status:
                 if user[1] is None:
