@@ -185,7 +185,7 @@ async def on_message(message):
                 await client.send_message(message.channel, fmt.format())
 
     if message.content.startswith('/help'):
-        fmt = "*hick*\n\nHi, I'm D2-Bot and I live here now.\nThe old commands are still available :\nbttn, stats, status, undo and help!\n*hick*"
+        fmt = "Hi, I'm **D2-Bot**.\n\n__Here are my commands.__\n*Have a cold one and give it a try!!!*\n ```/bttn      - Time to let get that 💡 on!\n/stats     - Plots a beautiful graph of the current stats!\n/status    - Someone is surely having a better day than you!\n/undo      - Undo you last bttn with this!\n/help      - Show this text right here ^^^```\n"
         
         await client.send_message(message.channel, fmt.format())
 
