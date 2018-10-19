@@ -17,6 +17,7 @@ handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w'
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
+
 # Load the secret token based on os
 if platform == "linux" or platform == "linux2":
     print('Loading production token')
@@ -27,7 +28,6 @@ elif platform == "darwin":
     print('Loading development token')
     with open('../token_dev.txt') as f:
         token = f.read().strip()
-    
 
 
 # Load channel ids
@@ -212,6 +212,7 @@ async def on_message_delete(message):
         gifList = ['http://gph.is/1tqdwbx', 'http://gph.is/1a6zuNG', 'http://gph.is/2FUSxMU', 'http://gph.is/2Cd1e3e', 'http://gph.is/1OZm0mH']
         fmt = random.choice(gifList)
         await client.send_message(message.channel, fmt.format(message))
+
 
 def checkWord(content):
     biraList = ['öl ', 'bisse ', 'bärs ', 'kalja ', 'bira ', 'beer ', 'pilsner ']
