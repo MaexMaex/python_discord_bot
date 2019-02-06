@@ -125,3 +125,9 @@ tests.py
 
 # MatPlotLib
 figure.png
+
+# ignore old stats dump
+stats*
+
+#ignore cron logs
+nohup*
