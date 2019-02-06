@@ -21,22 +21,26 @@ logger.addHandler(handler)
 ap = argparse.ArgumentParser()
 ap.add_argument("-t", "--token", type=str, required=True,
 	help="path to your token.txt")
+ap.add_argument("-c", "--channel", type=str, required=True,
+	help="path to the chan_id.txt")
+    
 args = vars(ap.parse_args())
 
 # Load the secret token based on os
 if platform == "linux" or platform == "linux2":
-    print('Loading production token')
+    print('Loading production token ' + args['token'])
     with open(args['token']) as f:
         token = f.read().strip()
 elif platform == "darwin":
     # OS X
-    print('Loading development token')
+    print('Loading development token '+ args['token'])
     with open(args['token']) as f:
         token = f.read().strip()
 
 
 # Load channel ids
-with open('../chan_id.txt') as f:
+print('Your main Bot channel id is: '+ args['channel'])
+with open(args['channel']) as f:
     chan_id = f.read().strip()
 
 client = discord.Client()
