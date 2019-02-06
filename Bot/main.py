@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import discord
 import asyncio
+import argparse
 import logging
 import random
 import matplotlib.pyplot as plt
@@ -17,16 +18,20 @@ handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w'
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
+ap = argparse.ArgumentParser()
+ap.add_argument("-t", "--token", type=str, required=True,
+	help="path to your token.txt")
+args = vars(ap.parse_args())
 
 # Load the secret token based on os
 if platform == "linux" or platform == "linux2":
     print('Loading production token')
-    with open('../token.txt') as f:
+    with open(args['token']) as f:
         token = f.read().strip()
 elif platform == "darwin":
     # OS X
     print('Loading development token')
-    with open('../token_dev.txt') as f:
+    with open(args['token']) as f:
         token = f.read().strip()
 
 
