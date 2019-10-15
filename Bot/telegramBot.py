@@ -1,6 +1,6 @@
 import logging
 
-from telegram.ext import Updater, CommandHandler, Filters, CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, Filters, CallbackQueryHandler, ConversationHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from sqlite_models import User, Bttn
@@ -13,6 +13,11 @@ logger = logging.getLogger(__name__)
 
 db = DBView()  
 print('[INFO]: DATABASE FIRED UP!!')
+
+# Stages
+FIRST, SECOND = range(2)
+# Callback data
+CONFIRM, CANCEL = range(2)
 
 
 def error(update, context, error):
@@ -52,29 +57,62 @@ def status(update, context):
 
 
 def start(update, context):
+    user = update.message.from_user
+    logger.info("User %s started the conversation.", user.first_name)
     users = db.get_users()
     keyboard = []
     for user, i in users:
         keyboard.append([InlineKeyboardButton(user, callback_data=i)])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text('To begin moving your discord stats to telegram, please select your name from the list of users below:', reply_markup=reply_markup)
+    update.message.reply_text('To begin moving your Discord stats to Telegram, please select your old Discord username from the list below:', reply_markup=reply_markup)
+    
+    # Returning the state for the conversationHandler
+    return FIRST
 
-def button(update, context):
+def start_over(update, context):
+    """Prompt same text & keyboard as `start` does but not as new message"""
+    query = update.callback_query
+    bot = context.bot
+
+    users = db.get_users()
+    keyboard = []
+    for user, i in users:
+        print(user, i)
+        keyboard.append([InlineKeyboardButton(user, callback_data=str(i))])
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    # Instead of sending a new message, edit the message that
+    # originated the CallbackQuery. This gives the feeling of an
+    # interactive menu.
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text='To begin moving your Discord stats to Telegram, please select your old Discord username from the list below:',
+        reply_markup=reply_markup
+    )
+    return FIRST
+
+def confirm(update, context):
     query = update.callback_query
     user = db.get_user(query.data)
+    bot = context.bot
     # query.edit_message_text(text="Selected option: {}".format(user))
     keyboard = [
         [InlineKeyboardButton("Yes", callback_data=0),
         InlineKeyboardButton("No", callback_data=1)]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.edit_message_text(chat_id=update.callback_query.message.chat_id,
-                      message_id=update.callback_query.message.message_id,
+    bot.edit_message_text(chat_id=query.message.chat_id,
+                      message_id=query.message.message_id,
                       text="Are you sure you are {}?".format(user.name), 
-                      reply_markup=InlineKeyboardMarkup(keyboard))
-    
-    update.answer_callback_query(update.callback_query.id, text='')
+                      reply_markup=reply_markup)
+    return FIRST
+
+def cancel(update, context):
+    return ConversationHandler.END
+
+def end(update, context):
 
 def bttn(update, context):
     stat = db.get_all_score()
@@ -134,13 +172,21 @@ def main():
 
     dp = updater.dispatcher 
 
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('start', start)],
+        states={
+            FIRST: [CallbackQueryHandler(confirm, pattern='^' + str(CONFIRM) + '$'),
+            SECOND: [CallbackQueryHandler(start_over, pattern='^' + str(ONE) + '$'),
+                     CallbackQueryHandler(end, pattern='^' + str(TWO) + '$')]
+        },
+        fallbacks=[CommandHandler('start', start)]
+    )
+    dp.add_handler(conv_handler)
     dp.add_handler(CommandHandler("bttn", bttn))
     dp.add_handler(CommandHandler("stats", stats))
     dp.add_handler(CommandHandler("status", status))
     dp.add_handler(CommandHandler("undo", undo))
     dp.add_handler(CommandHandler("help", help))
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CallbackQueryHandler(button))
 
     dp.add_error_handler(error)
 
