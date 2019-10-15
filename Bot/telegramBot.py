@@ -94,6 +94,7 @@ def confirm(update, context):
     query = update.callback_query
     user = db.get_user(query.data)
     bot = context.bot
+    context.user_data['choise'] = user
     keyboard = [
         [InlineKeyboardButton("Yes", callback_data=str(YES)),
             InlineKeyboardButton("No", callback_data=str(NO))]
@@ -108,6 +109,8 @@ def confirm(update, context):
 
 def done(update, context):
     query = update.callback_query
+    user = context.user_data['choise']
+
     bot = context.bot
     bot.edit_message_text(
         chat_id=query.message.chat_id,
@@ -130,6 +133,7 @@ def cancel(update, context):
 
 def bttn(update, context):
     if check_user(update, context):
+
         user = update.message.from_user
         # status = db.get_min_status(user.id)
         if status[0] == 0:
@@ -142,12 +146,18 @@ def bttn(update, context):
         else:
 
             update.message.reply_text(user.username + " stopped drinking!")
+    else:
+        text = 'It seems you are not in my records, please verify that you have indeed signed up!'
+        update.message.reply_text(text)
 
 
 def check_user(update, context):
     """verify that a user has signed up"""
-    u_id = update.from.id
-    if db.tel_get_user(u.id)
+    # u_id = update.message.
+    if db.tel_get_user(u.id) is not None:
+        return True
+    else:
+        return False
 
 
 def help(update, context):
