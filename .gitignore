@@ -131,3 +131,5 @@ stats*
 
 #ignore cron logs
 nohup*
+
+/Bot/telegramToken.txt
