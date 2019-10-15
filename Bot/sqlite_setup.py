@@ -1,5 +1,6 @@
 import sqlite3
 
+
 class DBSetup:
 
     def __init__(self, dbname="bttn.sqlite"):
@@ -9,18 +10,32 @@ class DBSetup:
 
     def setup(self):
         with self.conn:
-            self.c.execute("""CREATE TABLE users (
+            self.c.execute("""CREATE TABLE IF NOT EXISTS users (
                 discord_id integer unique, 
                 name text, 
                 score integer, 
                 status integer
                 )""")
-            
-            self.c.execute("""CREATE TABLE bttns (
+
+            self.c.execute("""CREATE TABLE IF NOT EXISTS bttns (
                 discord_id integer, 
                 party_name text, 
                 timestamp real,
                 foreign key(discord_id) references users(discord_id)
+                )""")
+
+            self.c.execute(""" CREATE TABLE IF NOT EXISTS telegram_users (
+                telegram_id integer unique,
+                name text,
+                score integer, 
+                status integer
+                )""")
+
+            self.c.execute("""CREATE TABLE IF NOT EXISTS telegram_btts (
+                telegram_id integer, 
+                party_name text, 
+                timestamp real,
+                foreign key(telegram_id) references telegram_users(telegram_id)
                 )""")
 
 
