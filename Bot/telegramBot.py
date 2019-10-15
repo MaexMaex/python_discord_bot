@@ -7,27 +7,30 @@ from sqlite_models import User, Bttn
 from sqlite_view import DBView
 from datetime import datetime
 
-#change the logging level between INFO - normal mode or DEBUG - verbose mode
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
-logger = logging.getLogger(__name__)    
+# change the logging level between INFO - normal mode or DEBUG - verbose mode
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-db = DBView()  
+db = DBView()
 print('[INFO]: DATABASE FIRED UP!!')
 
 # Stages
-FIRST, SECOND = range(2)
+FIRST, SECOND, THIRD = range(3)
 # Callback data
-CONFIRM, CANCEL = range(2)
+YES, NO = range(2)
 
 
-def error(update, context, error):
-    logger.warning('Update "%s" caused error "%s"' % (update, error))
+def error(update, context):
+    logger.warning('Update "%s" caused error "%s"', update, context.error)
+
 
 def undo(update, context):
-    if checkUser(update, context):
-        user = update.message.from_user 
-        
-        update.message.reply_text("I removed your last bttn and reset your status!")
+    if check_user(update, context):
+        user = update.message.from_user
+
+        update.message.reply_text(
+            "I removed your last bttn and reset your status!")
         db.remove_bttn(user.id)
         user_status = db.get_min_status(user.id)
         if user_status == 1:
@@ -35,17 +38,19 @@ def undo(update, context):
         else:
             db.change_status(user.id, 1)
 
+
 def stats(update, context):
-    if checkUser(update, context):
-        #stats = db.get_all_statistics()        
+    if check_user(update, context):
+        # stats = db.get_all_statistics()
         users = "These are the statistics for all users!\n"
         for line in stats:
             users += line[0] + " : " + str(line[1]) + "\n"
         update.message.reply_text(users)
 
-#the status method returns the status of every registered user   
+
+# the status method returns the status of every registered user
 def status(update, context):
-    if checkUser(update, context):
+    if check_user(update, context):
         status = db.get_all_status()
         users = "The following minotaurs are drinking!\n"
         for line in status:
@@ -57,112 +62,124 @@ def status(update, context):
 
 
 def start(update, context):
-    user = update.message.from_user
-    logger.info("User %s started the conversation.", user.first_name)
-    users = db.get_users()
-    keyboard = []
-    for user, i in users:
-        keyboard.append([InlineKeyboardButton(user, callback_data=i)])
-
+    text = "Howdy. Select sign up if you want to move your discord stats to telegram!"
+    keyboard = [
+        [InlineKeyboardButton("Sign up", callback_data=str(YES)),
+         InlineKeyboardButton("Cancel", callback_data=str(NO))]
+    ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text('To begin moving your Discord stats to Telegram, please select your old Discord username from the list below:', reply_markup=reply_markup)
-    
-    # Returning the state for the conversationHandler
+    update.message.reply_text(text, reply_markup=reply_markup)
     return FIRST
 
-def start_over(update, context):
-    """Prompt same text & keyboard as `start` does but not as new message"""
+
+def signUp(update, context):
+    text = "To transfer your Discord stats to Telegram, please select your old Discord username from the list below:"
+    users = db.get_users()
     query = update.callback_query
     bot = context.bot
-
-    users = db.get_users()
     keyboard = []
-    for user, i in users:
-        print(user, i)
-        keyboard.append([InlineKeyboardButton(user, callback_data=str(i))])
 
+    for user, i in users:
+        keyboard.append([InlineKeyboardButton(user, callback_data=i)])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    # Instead of sending a new message, edit the message that
-    # originated the CallbackQuery. This gives the feeling of an
-    # interactive menu.
-    bot.edit_message_text(
-        chat_id=query.message.chat_id,
-        message_id=query.message.message_id,
-        text='To begin moving your Discord stats to Telegram, please select your old Discord username from the list below:',
-        reply_markup=reply_markup
-    )
-    return FIRST
+    bot.edit_message_text(chat_id=query.message.chat_id,
+                          message_id=query.message.message_id,
+                          text=text,
+                          reply_markup=reply_markup)
+    return SECOND
+
 
 def confirm(update, context):
+
     query = update.callback_query
     user = db.get_user(query.data)
     bot = context.bot
-    # query.edit_message_text(text="Selected option: {}".format(user))
     keyboard = [
-        [InlineKeyboardButton("Yes", callback_data=0),
-        InlineKeyboardButton("No", callback_data=1)]
+        [InlineKeyboardButton("Yes", callback_data=str(YES)),
+            InlineKeyboardButton("No", callback_data=str(NO))]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     bot.edit_message_text(chat_id=query.message.chat_id,
-                      message_id=query.message.message_id,
-                      text="Are you sure you are {}?".format(user.name), 
-                      reply_markup=reply_markup)
-    return FIRST
+                          message_id=query.message.message_id,
+                          text="Are you sure you are {}?".format(user[1]),
+                          reply_markup=reply_markup)
+    return THIRD
 
-def cancel(update, context):
+
+def done(update, context):
+    query = update.callback_query
+    bot = context.bot
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text='Thank you! The database has been updated with your new credentials. \n🍺🍺🍺🍺 ',
+    )
     return ConversationHandler.END
 
-def end(update, context):
+
+def cancel(update, context):
+    query = update.callback_query
+    bot = context.bot
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text='CYA 🍺!',
+    )
+    return ConversationHandler.END
+
 
 def bttn(update, context):
-    stat = db.get_all_score()
-    print(stat)
-    return
-    if checkUser(update, context):
-        user = update.message.from_user 
-        #status = db.get_min_status(user.id) 
+    if check_user(update, context):
+        user = update.message.from_user
+        # status = db.get_min_status(user.id)
         if status[0] == 0:
-                #btn = Bttn(usr_obj.discord_id, message.content, message.timestamp)
+                # btn = Bttn(usr_obj.discord_id, message.content, message.timestamp)
                 # Get the status of the user
-                #db.edit_status(usr_obj, 1)
-                #db.add_score(usr_obj)
-                #db.add_bttn(usr_obj, btn)
+                # db.edit_status(usr_obj, 1)
+                # db.add_score(usr_obj)
+                # db.add_bttn(usr_obj, btn)
             update.message.reply_text(user.username + " is drinking!")
         else:
-            
+
             update.message.reply_text(user.username + " stopped drinking!")
 
 
-# def checkUser(user):
+def check_user(update, context):
+    """verify that a user has signed up"""
+    u_id = update.from.id
+    if db.tel_get_user(u.id)
 
-#the help method displays what this bot is does and give some stats about it
+
 def help(update, context):
-    # current date and time
-    now = datetime.now()
-    s2 = now.strftime("%d/%m/%Y, %H:%M")
-    print(update)
+    """this help method displays what this bot does and give some stats about it"""
+    user = update.message.from_user
+    if user.username:
+        user = user.username
+    else:
+        user = user.first_name
+    # now = datetime.now()
+    # s2 = now.strftime("%d/%m/%Y, %H:%M")
+    # 'time': s2,
     botInfo = {
-        'version': '2.0',
+        'version': 'v2.0',
         'name': 'D2',
         'hobby': 'Beer',
-        'time': s2
+        'user': user
     }
 
-    #################################################################################    
+    #################################################################################
 
-    helpGreeting = "[INFO]: I am {name}-bot mark {version}.\n\n[INFO:] Your are [STATUS] :(\nTo begin, click here => /start".format(**botInfo)                
-    print('helpGreeting')
+    helpGreeting = "Hi {user}! I am {name}-bot {version}.\n\n If your want to started press /start".format(
+        **botInfo)
+
     ####################################################################################
 
     update.message.reply_text(helpGreeting)
 
 
 def getToken():
-    f = open("telegramToken.txt","r")
+    f = open("telegramToken.txt", "r")
     return f.read()
-
-
-    
 
 
 def main():
@@ -170,14 +187,21 @@ def main():
     updater = Updater(token=getToken(), use_context=True)
     print('[INFO]: GOT THE TOKEN!')
 
-    dp = updater.dispatcher 
+    dp = updater.dispatcher
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            FIRST: [CallbackQueryHandler(confirm, pattern='^' + str(CONFIRM) + '$'),
-            SECOND: [CallbackQueryHandler(start_over, pattern='^' + str(ONE) + '$'),
-                     CallbackQueryHandler(end, pattern='^' + str(TWO) + '$')]
+            FIRST: [CallbackQueryHandler(signUp, pattern='^' + str(YES) + '$'),
+                    CallbackQueryHandler(cancel, pattern='^' + str(NO) + '$')],
+
+            SECOND: [
+                CallbackQueryHandler(confirm),
+            ],
+            THIRD: [
+                CallbackQueryHandler(done, pattern='^' + str(YES) + '$'),
+                CallbackQueryHandler(signUp, pattern='^' + str(NO) + '$')
+            ]
         },
         fallbacks=[CommandHandler('start', start)]
     )
@@ -193,6 +217,7 @@ def main():
     updater.start_polling()
     print('[INFO]: STARTING POLLING, THEN IDLING!!')
     updater.idle()
+
 
 if __name__ == '__main__':
     main()
