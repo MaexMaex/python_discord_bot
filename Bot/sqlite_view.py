@@ -5,7 +5,7 @@ class DBView:
 
     def __init__(self, dbname="bttn.sqlite"):
         self.dbname = dbname
-        self.conn = sqlite3.connect(dbname)
+        self.conn = sqlite3.connect(dbname, check_same_thread=False)
         self.c = self.conn.cursor()
 
 
@@ -38,6 +38,11 @@ class DBView:
             self.c.execute("SELECT * FROM users WHERE discord_id = :discord_id", {'discord_id': discord_id})
             return self.c.fetchone()
 
+    # fetch user.id
+    def get_users(self):
+        with self.conn:
+            self.c.execute("SELECT name, discord_id FROM users")
+            return self.c.fetchall()
 
     # adds a bttn for a user.id
     def add_score(self, user):
