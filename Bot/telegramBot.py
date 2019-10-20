@@ -67,10 +67,10 @@ def status(update, context):
 
 def get_status(user_obj):
     status = db.tel_get_status(user_obj)
-    if status is 0:
-        return "You are currently drinking."
-    else:
+    if status[0] is 0:
         return "You are not drinking."
+    else:
+        return "You are currently drinking."
 
 
 def bttn(update, context):
@@ -94,6 +94,7 @@ def bttn(update, context):
         return ConversationHandler.END
     else:
         text = user_obj.name + ' stopped drinking!'
+        db.tel_edit_status(user_obj, 0)
         bot.edit_message_text(
             chat_id=query.message.chat_id,
             message_id=query.message.message_id,
@@ -158,7 +159,6 @@ def menu(update, context):
             db.tel_update_nickname(user_obj)
     context.user_data['date'] = update.message.date
     context.user_data['user'] = user_obj
-    print('I AM HERE')
     status = get_status(user_obj)
     text = random.choice(hellolist) + \
         " {}!🍻\n\n{}".format(user_obj.name, status)
