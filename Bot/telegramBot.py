@@ -1,4 +1,5 @@
 import logging
+import random
 
 from telegram.ext import Updater, CommandHandler, Filters, CallbackQueryHandler, ConversationHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -16,9 +17,13 @@ db = DBView()
 print('[INFO]: DATABASE FIRED UP!!')
 
 # Stages
-FIRST, SECOND, THIRD = range(3)
+FIRST, SECOND, THIRD, MENU = range(4)
 # Callback data
-YES, NO = range(2)
+YES, NO, BTTN, STATUS, STATS, UNDO = range(6)
+
+byelist = ['CYA !', 'Goodbye', 'So long!', 'Godspeed', 'Bye-Bye', 'Adios']
+hellolist = ['Greetings', 'Hi', 'Howdy',
+             'Welcome', 'Howdy-do', 'How are you', 'Hey']
 
 
 def error(update, context):
@@ -28,7 +33,6 @@ def error(update, context):
 def undo(update, context):
     if check_user(update, context):
         user = update.message.from_user
-
         update.message.reply_text(
             "I removed your last bttn and reset your status!")
         db.remove_bttn(user.id)
@@ -50,7 +54,7 @@ def stats(update, context):
 
 # the status method returns the status of every registered user
 def status(update, context):
-    if check_user(update, context):
+    if check_user(update):
         status = db.get_all_status()
         users = "The following minotaurs are drinking!\n"
         for line in status:
@@ -61,13 +65,127 @@ def status(update, context):
         update.message.reply_text(users)
 
 
+def get_status(user_obj):
+    status = db.tel_get_status(user_obj)
+    if status is 0:
+        return "You are currently drinking."
+    else:
+        return "You are not drinking."
+
+
+def bttn(update, context):
+    user_obj = context.user_data['user']
+    status = db.tel_get_status(user_obj)
+    query = update.callback_query
+    bot = context.bot
+    print('I AM HERE', status[0])
+    if status[0] is 0:
+        btn = TelegramBttn(user_obj.telegram_id,
+                           'TESTICOL', context.user_data['date'])
+        db.tel_edit_status(user_obj, 1)
+        db.tel_add_score(user_obj)
+        db.tel_add_bttn(user_obj, btn)
+        text = user_obj.name + ' is drinking! 🍺!'
+        bot.edit_message_text(
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id,
+            text=text,
+        )
+        return ConversationHandler.END
+    else:
+        text = user_obj.name + ' stopped drinking!'
+        bot.edit_message_text(
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id,
+            text=text,
+        )
+        return ConversationHandler.END
+
+
+def get_user_obj(id):
+    """Create a user object that is used within the bot"""
+    user = db.tel_get_user(id)
+    user_obj = TelegramUser(user[0], user[1], user[2], user[3], user[4])
+    return user_obj
+
+
+def check_user(update):
+    """verify that a user has signed up"""
+    user = update.message.from_user
+    if db.tel_get_user(user.id) is not None:
+        return True
+    else:
+        return False
+
+
+def help(update, context):
+    """this help method displays what this bot does and give some stats about it"""
+    user = update.message.from_user
+    if user.username:
+        user = user.username
+    else:
+        user = user.first_name
+    # now = datetime.now()
+    # s2 = now.strftime("%d/%m/%Y, %H:%M")
+    # 'time': s2,
+    botInfo = {
+        'version': 'v2.0',
+        'name': 'D2',
+        'hobby': 'Beer',
+        'user': user
+    }
+
+    #################################################################################
+
+    helpGreeting = "Hi {user}! I am {name}-bot {version}.\n\nTo sign up press /start\nTo open the menu press /menu\n".format(
+        **botInfo)
+
+    ####################################################################################
+
+    update.message.reply_text(helpGreeting)
+
+
+def menu(update, context):
+    if not check_user(update):
+        update.message.reply_text(
+            'Go away!!!🖕\nPlease press \n\n/start\n\nto continue!')
+        return
+
+    user_obj = get_user_obj(update.message.from_user.id)
+    if update.message.from_user.username is not None:
+        if user_obj.name is not update.message.from_user.username:
+            user_obj.name = update.message.from_user.username
+            db.tel_update_nickname(user_obj)
+    context.user_data['date'] = update.message.date
+    context.user_data['user'] = user_obj
+    print('I AM HERE')
+    status = get_status(user_obj)
+    text = random.choice(hellolist) + \
+        " {}!🍻\n\n{}".format(user_obj.name, status)
+
+    keyboard = [
+        [InlineKeyboardButton("Bttn", callback_data=str(BTTN)),
+         InlineKeyboardButton("Status", callback_data=str(STATUS)),
+         InlineKeyboardButton("Stats", callback_data=str(STATS)),
+         InlineKeyboardButton("Undo", callback_data=str(UNDO)),
+         InlineKeyboardButton("Close", callback_data=str(NO)), ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text(text, reply_markup=reply_markup)
+    return MENU
+
+
 def start(update, context):
+    if check_user(update):
+        update.message.reply_text(
+            '🍺🍺🍺🍺🍺🍺🍺🍺 You are already singed up! 🍺🍺🍺🍺🍺🍺🍺🍺')
+        return
     uuid = update.message.from_user.id
     if update.message.from_user.username is not None:
         username = update.message.from_user.username
     else:
         username = update.message.from_user.first_name
-    text = "Howdy {}! Select sign up if you want to move your discord stats to telegram!".format(
+    text = random.choise(hellolist) + " {}! Select sign up if you want to move your discord stats to telegram!".format(
         username)
 
     context.user_data['uuid'] = uuid
@@ -142,68 +260,13 @@ def done(update, context):
 def cancel(update, context):
     query = update.callback_query
     bot = context.bot
+
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
-        text='CYA 🍺!',
+        text=random.choice(byelist) + '🍺',
     )
     return ConversationHandler.END
-
-
-def bttn(update, context):
-    if check_user(update, context):
-
-        user = update.message.from_user
-        # status = db.get_min_status(user.id)
-        if status[0] == 0:
-                # btn = Bttn(usr_obj.discord_id, message.content, message.timestamp)
-                # Get the status of the user
-                # db.edit_status(usr_obj, 1)
-                # db.add_score(usr_obj)
-                # db.add_bttn(usr_obj, btn)
-            update.message.reply_text(user.username + " is drinking!")
-        else:
-
-            update.message.reply_text(user.username + " stopped drinking!")
-    else:
-        text = 'It seems you are not in my records, please verify that you have indeed signed up!'
-        update.message.reply_text(text)
-
-
-def check_user(update, context):
-    """verify that a user has signed up"""
-    # u_id = update.message.
-    if db.tel_get_user(u.id) is not None:
-        return True
-    else:
-        return False
-
-
-def help(update, context):
-    """this help method displays what this bot does and give some stats about it"""
-    user = update.message.from_user
-    if user.username:
-        user = user.username
-    else:
-        user = user.first_name
-    # now = datetime.now()
-    # s2 = now.strftime("%d/%m/%Y, %H:%M")
-    # 'time': s2,
-    botInfo = {
-        'version': 'v2.0',
-        'name': 'D2',
-        'hobby': 'Beer',
-        'user': user
-    }
-
-    #################################################################################
-
-    helpGreeting = "Hi {user}! I am {name}-bot {version}.\n\n If your want to started press /start".format(
-        **botInfo)
-
-    ####################################################################################
-
-    update.message.reply_text(helpGreeting)
 
 
 def getToken():
@@ -219,7 +282,8 @@ def main():
     dp = updater.dispatcher
 
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
+        entry_points=[CommandHandler(
+            'start', start), CommandHandler('menu', menu)],
         states={
             FIRST: [CallbackQueryHandler(signUp, pattern='^' + str(YES) + '$'),
                     CallbackQueryHandler(cancel, pattern='^' + str(NO) + '$')],
@@ -231,15 +295,18 @@ def main():
             THIRD: [
                 CallbackQueryHandler(done, pattern='^' + str(YES) + '$'),
                 CallbackQueryHandler(signUp, pattern='^' + str(NO) + '$')
+            ],
+            MENU: [
+                CallbackQueryHandler(bttn, pattern='^' + str(BTTN) + '$'),
+                CallbackQueryHandler(stats, pattern='^' + str(STATS) + '$'),
+                CallbackQueryHandler(status, pattern='^' + str(STATUS) + '$'),
+                CallbackQueryHandler(undo, pattern='^' + str(UNDO) + '$'),
+                CallbackQueryHandler(cancel, pattern='^' + str(NO) + '$')
             ]
         },
         fallbacks=[CommandHandler('start', start)]
     )
     dp.add_handler(conv_handler)
-    dp.add_handler(CommandHandler("bttn", bttn))
-    dp.add_handler(CommandHandler("stats", stats))
-    dp.add_handler(CommandHandler("status", status))
-    dp.add_handler(CommandHandler("undo", undo))
     dp.add_handler(CommandHandler("help", help))
 
     dp.add_error_handler(error)
