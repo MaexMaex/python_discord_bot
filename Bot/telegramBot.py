@@ -4,6 +4,8 @@
 import logging
 import random
 import re
+import argparse
+from sys import platform
 
 from telegram.ext import Updater, CommandHandler, Filters, CallbackQueryHandler, ConversationHandler, Filters, MessageHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -11,6 +13,24 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from sqlite_models import User, Bttn, TelegramBttn, TelegramUser
 from sqlite_view import DBView
 from datetime import datetime
+
+ap = argparse.ArgumentParser()
+ap.add_argument("-t", "--token", type=str, required=True,
+                help="path to your token.txt")
+ap.add_argument("-c", "--channel", type=str, required=False,
+                help="path to the chan_id.txt")
+args = vars(ap.parse_args())
+
+
+if platform == "linux" or platform == "linux2":
+    print('Loading production token ' + args['token'])
+    with open(args['token']) as f:
+        token = f.read().strip()
+elif platform == "darwin":
+    # OS X
+    print('Loading development token ' + args['token'])
+    with open(args['token']) as f:
+        token = f.read().strip()
 
 # change the logging level between INFO - normal mode or DEBUG - verbose mode
 logging.basicConfig(
@@ -344,7 +364,7 @@ def getToken():
 
 def main():
     print('[INFO]: STARTING UP!')
-    updater = Updater(token=getToken(), use_context=True)
+    updater = Updater(token, use_context=True)
     print('[INFO]: GOT THE TOKEN!')
 
     dp = updater.dispatcher
