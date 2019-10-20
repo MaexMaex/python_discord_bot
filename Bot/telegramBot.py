@@ -1,7 +1,8 @@
 import logging
 import random
+import re
 
-from telegram.ext import Updater, CommandHandler, Filters, CallbackQueryHandler, ConversationHandler
+from telegram.ext import Updater, CommandHandler, Filters, CallbackQueryHandler, ConversationHandler, Filters, MessageHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from sqlite_models import User, Bttn, TelegramBttn, TelegramUser
@@ -24,6 +25,16 @@ YES, NO, BTTN, STATUS, STATS, UNDO = range(6)
 byelist = ['CYA !', 'Goodbye', 'So long!', 'Godspeed', 'Bye-Bye', 'Adios']
 hellolist = ['Greetings', 'Hi', 'Howdy',
              'Welcome', 'Howdy-do', 'How are you', 'Hey']
+undogifs = ['https://media.giphy.com/media/VbrGKu56dceVa/giphy.gif',
+            'http://giphygifs.s3.amazonaws.com/media/I7kkegrRyNrk4/giphy.gif', 'https://media.giphy.com/media/vohOR29F78sGk/giphy.gif']
+biralist = ['öl', 'bisse', 'bärs', 'kalja', 'bira',
+            'beer', 'pilsner', 'ipa', 'ale', 'stout', 'lager']
+beergifs = ['https://media.giphy.com/media/Zw3oBUuOlDJ3W/giphy.gif', 'https://media.giphy.com/media/3o7btZjaYxqkGyOYA8/giphy.gif', 'https://media.giphy.com/media/xT1R9XnFJkL1S2BFqo/giphy.gif',
+            'https://media.giphy.com/media/3o7TKoQ2whJd062fba/giphy.gif', 'https://media.giphy.com/media/zXubYhkWFc9uE/giphy.gif', 'https://media.giphy.com/media/KylMzku5T57A4/giphy.gif', 'https://media.giphy.com/media/26ght6psZEpil8pHy/giphy.gif',
+            'https://media.giphy.com/media/qA6m3bCy71Ukw/giphy.gif', 'https://media.giphy.com/media/5WKhPddhq34Eo/giphy.gif', 'https://media.giphy.com/media/3ohc10ewmaWSM5UBTa/giphy.gif', 'https://media.giphy.com/media/fvB5VRSCElfzO/giphy.gif',
+            'https://media.giphy.com/media/6b8D22vANc2mPzs178/giphy.gif', 'https://media.giphy.com/media/B2kqzdgMSBcpxHL33q/giphy.gif', 'https://media.giphy.com/media/1xmBbk9i6cQCjuVTzC/giphy.gif',
+            'https://media.giphy.com/media/3o6MbexPF7FxgIkxLW/giphy.gif', 'http://giphygifs.s3.amazonaws.com/media/149EV8wlV75ZQc/giphy.gif', 'https://media.giphy.com/media/3ohfFJUMgs8m5F9qec/giphy.gif',
+            ]
 
 
 def error(update, context):
@@ -31,29 +42,47 @@ def error(update, context):
 
 
 def undo(update, context):
-    if check_user(update, context):
-        user = update.message.from_user
-        update.message.reply_text(
-            "I removed your last bttn and reset your status!")
-        db.remove_bttn(user.id)
-        user_status = db.get_min_status(user.id)
-        if user_status == 1:
-            db.change_status(user.id, 0)
-        else:
-            db.change_status(user.id, 1)
+    query = update.callback_query
+    bot = context.bot
+    user_obj = context.user_data['user']
+    status = db.tel_get_status(user_obj)
+
+    if status[0] is 1:
+        text = "I WILL FIX!\n\n\n" + \
+            random.choice(undogifs) + \
+            "\n\nI removed your last bttn and reset your status!"
+        db.tel_edit_status(user_obj, 0)
+        db.tel_remove_score(user_obj)
+        bot.edit_message_text(
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id,
+            text=text,
+        )
+        return ConversationHandler.END
+
+    else:
+        text = 'I dont know why you would ever want to stop the party, but okay \n' + \
+            random.choice(undogifs)
+        db.tel_edit_status(user_obj, 1)
+        bot.edit_message_text(
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id,
+            text=text,
+        )
+        return ConversationHandler.END
 
 
 def stats(update, context):
     query = update.callback_query
     bot = context.bot
     stats = db.tel_get_all_score()
-    users = "These are the statistics for all users!\n"
+    text = "These are the statistics for all users!\n"
     for line in stats:
-        users += line[0] + " : " + str(line[1]) + "\n"
+        text += line[0] + " : " + str(line[1]) + "\n"
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
-        text=users,
+        text=text,
     )
     return ConversationHandler.END
 
@@ -154,7 +183,7 @@ def help(update, context):
     # s2 = now.strftime("%d/%m/%Y, %H:%M")
     # 'time': s2,
     botInfo = {
-        'version': 'v2.0',
+        'version': 'v3.0',
         'name': 'D2',
         'hobby': 'Beer',
         'user': user
@@ -185,8 +214,7 @@ def menu(update, context):
     context.user_data['user'] = user_obj
     status = get_status(user_obj)
     text = random.choice(hellolist) + \
-        " {}!🍻\n\n{}".format(user_obj.name, status)
-
+        " {}!🍻\n{}\n\n".format(user_obj.name, status)
     keyboard = [
         [InlineKeyboardButton("Bttn", callback_data=str(BTTN)),
          InlineKeyboardButton("Status", callback_data=str(STATUS)),
@@ -209,7 +237,7 @@ def start(update, context):
         username = update.message.from_user.username
     else:
         username = update.message.from_user.first_name
-    text = random.choise(hellolist) + " {}! Select sign up if you want to move your discord stats to telegram!".format(
+    text = random.choice(hellolist) + " {}! Select sign up if you want to move your discord stats to telegram!".format(
         username)
 
     context.user_data['uuid'] = uuid
@@ -259,6 +287,19 @@ def confirm(update, context):
                               discord_user[1]),
                           reply_markup=reply_markup)
     return THIRD
+
+
+def check_word(w):
+    return re.compile(r'\b({0})\b'.format(w), flags=re.IGNORECASE).search
+
+
+def word_finder(update, context):
+    content = update.message.text.split()
+    check = ' '.join(biralist)
+    if random.choice([0, 1]) is 1:
+        if check_word(content)(check):
+            text = "🍺 😍😍😍 🍺" + random.choice(beergifs)
+            update.message.reply_text(text)
 
 
 def done(update, context):
@@ -332,7 +373,7 @@ def main():
     )
     dp.add_handler(conv_handler)
     dp.add_handler(CommandHandler("help", help))
-
+    dp.add_handler(MessageHandler(Filters.text, word_finder))
     dp.add_error_handler(error)
 
     updater.start_polling()
