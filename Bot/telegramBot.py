@@ -44,25 +44,50 @@ def undo(update, context):
 
 
 def stats(update, context):
-    if check_user(update, context):
-        # stats = db.get_all_statistics()
-        users = "These are the statistics for all users!\n"
-        for line in stats:
-            users += line[0] + " : " + str(line[1]) + "\n"
-        update.message.reply_text(users)
+    query = update.callback_query
+    bot = context.bot
+    stats = db.tel_get_all_score()
+    users = "These are the statistics for all users!\n"
+    for line in stats:
+        users += line[0] + " : " + str(line[1]) + "\n"
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text=users,
+    )
+    return ConversationHandler.END
 
 
-# the status method returns the status of every registered user
 def status(update, context):
-    if check_user(update):
-        status = db.get_all_status()
-        users = "The following minotaurs are drinking!\n"
+    """the status method returns the status of every registered user"""
+
+    query = update.callback_query
+    bot = context.bot
+    status = db.tel_get_all_status()
+
+    for user in status:
+        if user[1] is 0:
+            Bttns = False
+        else:
+            Bttns = True
+
+    if Bttns:
+        text = 'The following minotaurs are drinking!\n'
         for line in status:
-            if line[1] == 1:
-                users += line[0] + " : " + str(line[1]) + "\n"
+            if line[1] is 1:
+                text += line[0] + "\n"
             else:
                 pass
-        update.message.reply_text(users)
+
+    else:
+        text = "Awfully silent here 😞😞😞"
+
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text=text,
+    )
+    return ConversationHandler.END
 
 
 def get_status(user_obj):
@@ -78,7 +103,6 @@ def bttn(update, context):
     status = db.tel_get_status(user_obj)
     query = update.callback_query
     bot = context.bot
-    print('I AM HERE', status[0])
     if status[0] is 0:
         btn = TelegramBttn(user_obj.telegram_id,
                            'TESTICOL', context.user_data['date'])
