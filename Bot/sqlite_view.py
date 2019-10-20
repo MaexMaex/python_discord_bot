@@ -118,10 +118,10 @@ class DBView:
         # CTRLV CTRLC DB VIEWS FOR TELEGRAM STUFF BELOW
         #
 
-    def tel_clone_discord_user(self, user, discord_id, score):
+    def tel_clone_discord_user(self, user):
         with self.conn:
-            self.c.execute("INSERT INTO telegram_users VALUES (:telegram_id, :discord_id :name, :score, :status)", {
-                           'telegram_id': user.telegram_id, 'discord_id': discord_id, 'name': user.name, 'score': score, 'status': user.status})
+            self.c.execute("INSERT INTO telegram_users VALUES (:telegram_id, :discord_id, :name, :score, :status)", {
+                           'telegram_id': user.telegram_id, 'discord_id': user.discord_id, 'name': user.name, 'score': user.score, 'status': user.status})
 
     def tel_is_not_drinking(self, telegram_id):
         with self.conn:
