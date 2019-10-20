@@ -108,14 +108,20 @@ class DBView:
             self.c.execute("INSERT INTO bttns VALUES (:discord_id, :party_name, :timestamp)", {
                            'discord_id': user.discord_id, 'party_name': bttn.party_name, 'timestamp': bttn.timestamp})
 
-    #
-    # CTRLV CTRLC DB VIEWS FOR TELEGRAM STUFF BELOW
-    #
-
-    def tel_clone_discord_user(self, user, score):
+    def get_signup(self):
         with self.conn:
-            self.c.execute("INSERT INTO telegram_users VALUES (:telegram_id, :name, :score, :status)", {
-                           'telegram_id': user.telegram_id, 'name': user.name, 'score': score, 'status': user.status})
+            self.c.execute(
+                "SELECT users.name, users.discord_id from users LEFT  JOIN telegram_users ON users.discord_id = telegram_users.discord_id WHERE telegram_users.discord_id IS NULL")
+            return self.c.fetchall()
+
+        #
+        # CTRLV CTRLC DB VIEWS FOR TELEGRAM STUFF BELOW
+        #
+
+    def tel_clone_discord_user(self, user, discord_id, score):
+        with self.conn:
+            self.c.execute("INSERT INTO telegram_users VALUES (:telegram_id, :discord_id :name, :score, :status)", {
+                           'telegram_id': user.telegram_id, 'discord_id': discord_id, 'name': user.name, 'score': score, 'status': user.status})
 
     def tel_is_not_drinking(self, telegram_id):
         with self.conn:
@@ -141,13 +147,14 @@ class DBView:
     def tel_get_user(self, telegram_id):
         with self.conn:
             self.c.execute(
-                "SELECT * FROM telegram_users WHERE telegram_id = :telegram_id", {'telegram_id': telegram_id})
+                "SELECT * FROM telegram_users WHERE telegram_id = :telegram_id", {'telegram_id': telegram_id, 'discord_id': discord_id})
             return self.c.fetchone()
 
     # fetch user.id
     def tel_get_users(self):
         with self.conn:
-            self.c.execute("SELECT name, telegram_id FROM telegram_users")
+            self.c.execute(
+                "SELECT name, telegram_id, discord_id FROM telegram_users")
             return self.c.fetchall()
 
     # adds a bttn for a user.id
