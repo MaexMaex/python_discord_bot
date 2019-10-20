@@ -33,7 +33,7 @@ class DBSetup:
                 foreign key(discord_id) references users(discord_id)
                 )""")
 
-            self.c.execute("""CREATE TABLE IF NOT EXISTS telegram_btts (
+            self.c.execute("""CREATE TABLE IF NOT EXISTS telegram_bttns (
                 telegram_id integer, 
                 party_name text, 
                 timestamp real,
