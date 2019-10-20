@@ -26,9 +26,11 @@ class DBSetup:
 
             self.c.execute(""" CREATE TABLE IF NOT EXISTS telegram_users (
                 telegram_id integer unique,
+                discord_id integer,
                 name text,
                 score integer, 
-                status integer
+                status integer,
+                foreign key(discord_id) references users(discord_id)
                 )""")
 
             self.c.execute("""CREATE TABLE IF NOT EXISTS telegram_btts (
