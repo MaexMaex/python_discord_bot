@@ -147,7 +147,7 @@ class DBView:
     def tel_get_user(self, telegram_id):
         with self.conn:
             self.c.execute(
-                "SELECT * FROM telegram_users WHERE telegram_id = :telegram_id", {'telegram_id': telegram_id, 'discord_id': discord_id})
+                "SELECT * FROM telegram_users WHERE telegram_id = :telegram_id", {'telegram_id': telegram_id})
             return self.c.fetchone()
 
     # fetch user.id
