@@ -20,8 +20,9 @@ class Bttn():
 
 class TelegramUser:
 
-    def __init__(self, telegram_id, name, score=0, status=0):
+    def __init__(self, telegram_id, discord_id, name, score=0, status=0):
         self.telegram_id = telegram_id
+        self.discord_id = discord_id
         self.name = name
         self.score = score
         self.status = status
