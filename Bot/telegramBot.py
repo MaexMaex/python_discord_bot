@@ -3,13 +3,13 @@ import logging
 from telegram.ext import Updater, CommandHandler, Filters, CallbackQueryHandler, ConversationHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from sqlite_models import User, Bttn
+from sqlite_models import User, Bttn, TelegramBttn, TelegramUser
 from sqlite_view import DBView
 from datetime import datetime
 
 # change the logging level between INFO - normal mode or DEBUG - verbose mode
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 db = DBView()
@@ -62,7 +62,16 @@ def status(update, context):
 
 
 def start(update, context):
-    text = "Howdy. Select sign up if you want to move your discord stats to telegram!"
+    uuid = update.message.from_user.id
+    if update.message.from_user.username is not None:
+        username = update.message.from_user.username
+    else:
+        username = update.message.from_user.first_name
+    text = "Howdy {}! Select sign up if you want to move your discord stats to telegram!".format(
+        username)
+
+    context.user_data['uuid'] = uuid
+    context.user_data['username'] = username
     keyboard = [
         [InlineKeyboardButton("Sign up", callback_data=str(YES)),
          InlineKeyboardButton("Cancel", callback_data=str(NO))]
@@ -74,13 +83,15 @@ def start(update, context):
 
 def signUp(update, context):
     text = "To transfer your Discord stats to Telegram, please select your old Discord username from the list below:"
-    users = db.get_users()
+
+    users = db.get_signup()
     query = update.callback_query
     bot = context.bot
     keyboard = []
 
     for user, i in users:
         keyboard.append([InlineKeyboardButton(user, callback_data=i)])
+    keyboard.append([InlineKeyboardButton("Cancel", callback_data=str(NO))])
     reply_markup = InlineKeyboardMarkup(keyboard)
     bot.edit_message_text(chat_id=query.message.chat_id,
                           message_id=query.message.message_id,
@@ -92,9 +103,9 @@ def signUp(update, context):
 def confirm(update, context):
 
     query = update.callback_query
-    user = db.get_user(query.data)
+    discord_user = db.get_user(query.data)
     bot = context.bot
-    context.user_data['choise'] = user
+    context.user_data['choise'] = discord_user
     keyboard = [
         [InlineKeyboardButton("Yes", callback_data=str(YES)),
             InlineKeyboardButton("No", callback_data=str(NO))]
@@ -102,15 +113,23 @@ def confirm(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
     bot.edit_message_text(chat_id=query.message.chat_id,
                           message_id=query.message.message_id,
-                          text="Are you sure you are {}?".format(user[1]),
+                          text="Are you sure you are {}?".format(
+                              discord_user[1]),
                           reply_markup=reply_markup)
     return THIRD
 
 
 def done(update, context):
     query = update.callback_query
-    user = context.user_data['choise']
-
+    discord_user = context.user_data['choise']
+    user = TelegramUser(
+        context.user_data['uuid'],
+        discord_user[0],
+        context.user_data['username'],
+        discord_user[2],
+        0
+    )
+    db.tel_clone_discord_user(user)
     bot = context.bot
     bot.edit_message_text(
         chat_id=query.message.chat_id,
@@ -206,7 +225,8 @@ def main():
                     CallbackQueryHandler(cancel, pattern='^' + str(NO) + '$')],
 
             SECOND: [
-                CallbackQueryHandler(confirm),
+                CallbackQueryHandler(cancel, pattern='^' + str(NO) + '$'),
+                CallbackQueryHandler(confirm)
             ],
             THIRD: [
                 CallbackQueryHandler(done, pattern='^' + str(YES) + '$'),
