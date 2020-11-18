@@ -319,9 +319,9 @@ def check_word(w):
 def word_finder(update, context):
     content = update.message.text.split()
     check = ' '.join(biralist)
-    if random.choice([0, 1]) is 1:
+    if random.random() <= 0.6:
         if check_word(content)(check):
-            text = "🍺 😍😍😍 🍺" + random.choice(beergifs)
+            text = "🍺 😍" + random.choice(beergifs)
             update.message.reply_text(text)
 
 
