@@ -14,23 +14,6 @@ from sqlite_models import User, Bttn, TelegramBttn, TelegramUser
 from sqlite_view import DBView
 from datetime import datetime
 
-ap = argparse.ArgumentParser()
-ap.add_argument("-t", "--token", type=str, required=True,
-                help="path to your token.txt")
-ap.add_argument("-c", "--channel", type=str, required=False,
-                help="path to the chan_id.txt")
-args = vars(ap.parse_args())
-
-
-if platform == "linux" or platform == "linux2":
-    print('Loading production token ' + args['token'])
-    with open(args['token']) as f:
-        token = f.read().strip()
-elif platform == "darwin":
-    # OS X
-    print('Loading development token ' + args['token'])
-    with open(args['token']) as f:
-        token = f.read().strip()
 
 # change the logging level between INFO - normal mode or DEBUG - verbose mode
 logging.basicConfig(
@@ -52,12 +35,15 @@ undogifs = ['https://media.giphy.com/media/VbrGKu56dceVa/giphy.gif',
             'http://giphygifs.s3.amazonaws.com/media/I7kkegrRyNrk4/giphy.gif', 'https://media.giphy.com/media/vohOR29F78sGk/giphy.gif']
 biralist = ['öl', 'bisse', 'bärs', 'kalja', 'bira',
             'beer', 'pilsner', 'ipa', 'ale', 'stout', 'lager']
-beergifs = ['https://media.giphy.com/media/Zw3oBUuOlDJ3W/giphy.gif', 'https://media.giphy.com/media/3o7btZjaYxqkGyOYA8/giphy.gif', 'https://media.giphy.com/media/xT1R9XnFJkL1S2BFqo/giphy.gif',
-            'https://media.giphy.com/media/3o7TKoQ2whJd062fba/giphy.gif', 'https://media.giphy.com/media/zXubYhkWFc9uE/giphy.gif', 'https://media.giphy.com/media/KylMzku5T57A4/giphy.gif', 'https://media.giphy.com/media/26ght6psZEpil8pHy/giphy.gif',
-            'https://media.giphy.com/media/qA6m3bCy71Ukw/giphy.gif', 'https://media.giphy.com/media/5WKhPddhq34Eo/giphy.gif', 'https://media.giphy.com/media/3ohc10ewmaWSM5UBTa/giphy.gif', 'https://media.giphy.com/media/fvB5VRSCElfzO/giphy.gif',
-            'https://media.giphy.com/media/6b8D22vANc2mPzs178/giphy.gif', 'https://media.giphy.com/media/B2kqzdgMSBcpxHL33q/giphy.gif', 'https://media.giphy.com/media/1xmBbk9i6cQCjuVTzC/giphy.gif',
-            'https://media.giphy.com/media/3o6MbexPF7FxgIkxLW/giphy.gif', 'http://giphygifs.s3.amazonaws.com/media/149EV8wlV75ZQc/giphy.gif', 'https://media.giphy.com/media/3ohfFJUMgs8m5F9qec/giphy.gif',
-            ]
+beergifs = ['https://media.giphy.com/media/Zw3oBUuOlDJ3W/giphy.gif', 'https://media.giphy.com/media/3o7btZjaYxqkGyOYA8/giphy.gif',
+            'https://media.giphy.com/media/xT1R9XnFJkL1S2BFqo/giphy.gif', 'https://media.giphy.com/media/3o7TKoQ2whJd062fba/giphy.gif',
+            'https://media.giphy.com/media/zXubYhkWFc9uE/giphy.gif', 'https://media.giphy.com/media/KylMzku5T57A4/giphy.gif',
+            'https://media.giphy.com/media/26ght6psZEpil8pHy/giphy.gif', 'https://media.giphy.com/media/qA6m3bCy71Ukw/giphy.gif',
+            'https://media.giphy.com/media/5WKhPddhq34Eo/giphy.gif', 'https://media.giphy.com/media/3ohc10ewmaWSM5UBTa/giphy.gif',
+            'https://media.giphy.com/media/fvB5VRSCElfzO/giphy.gif', 'https://media.giphy.com/media/6b8D22vANc2mPzs178/giphy.gif',
+            'https://media.giphy.com/media/B2kqzdgMSBcpxHL33q/giphy.gif', 'https://media.giphy.com/media/1xmBbk9i6cQCjuVTzC/giphy.gif',
+            'https://media.giphy.com/media/3o6MbexPF7FxgIkxLW/giphy.gif', 'http://giphygifs.s3.amazonaws.com/media/149EV8wlV75ZQc/giphy.gif',
+            'https://media.giphy.com/media/3ohfFJUMgs8m5F9qec/giphy.gif', ]
 
 
 def error(update, context):
